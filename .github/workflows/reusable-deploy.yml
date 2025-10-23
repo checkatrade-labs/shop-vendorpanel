@@ -3,6 +3,10 @@ name: Reusable Deploy to Cloud Run
 on:
   workflow_call:
     inputs:
+      env:
+        required: true
+        type: string
+        description: "Application Environment"
       project_id:
         required: true
         type: string
@@ -27,11 +31,30 @@ on:
         required: true
         type: string
         description: "Docker image name"
-      env:
+      mode:
         required: true
         type: string
-        description: "Application Environment"
-
+        description: "Build mode (staging or production)"
+      vite_medusa_base:
+        required: true
+        type: string
+        description: "Vite MEDUSA base"
+      vite_medusa_storefront_url:
+        required: true
+        type: string
+        description: "Vite MEDUSA storefront URL"
+      vite_medusa_backend_url:
+        required: true
+        type: string
+        description: "Vite MEDUSA backend URL"
+      vite_talk_js_app_id:
+        required: true
+        type: string
+        description: "Vite Talk JS app ID"
+      vite_disable_sellers_registration:
+        required: true
+        type: string
+        description: "Vite disable sellers registration"
 
 jobs:
   deploy:
@@ -71,9 +94,7 @@ jobs:
 
           # Build and push the Docker image
           docker build \
-            --build-arg NEXT_PUBLIC_ENV=${{ inputs.env }} \
-            --build-arg NEXT_PUBLIC_ADYEN_ENVIRONMENT=${{ inputs.adyen_env }} \
-            --build-arg NEXT_PUBLIC_ADYEN_CLIENT_KEY=${{ inputs.adyen_client_key }} \
+            --build-arg MODE=${{ inputs.mode }} \
             -t ${{ inputs.registry_path }}/${{ inputs.image_name }}:${SHORT_SHA} \
             -t ${{ inputs.registry_path }}/${{ inputs.image_name }}:latest \
             .
@@ -92,8 +113,6 @@ jobs:
             --region ${{ inputs.region }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars ENV=${{ inputs.env }},ADYEN_ENVIRONMENT=${{ inputs.adyen_env }},ADYEN_MERCHANT_ACCOUNT=${{ inputs.adyen_merchant_account }},TANGRAM_BASE_URL=https://shop-portal.checkatrade.com/api/v1,TANGRAM_MERCHANT_ROLE_ID=${{ inputs.tangram_merchant_role_id }},vendorpanel_BASE_URL=${{ inputs.vendorpanel_base_url }} \
-            --update-secrets BRAZE_API_KEY=BRAZE_API_KEY:latest,BRAZE_REST_ENDPOINT=BRAZE_REST_ENDPOINT:latest,BRAZE_SENDER_EMAIL=BRAZE_SENDER_EMAIL:latest,BRAZE_APP_ID=BRAZE_APP_ID:latest
 
       - name: Set IAM policy for public access
         run: |

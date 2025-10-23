@@ -9,15 +9,17 @@ jobs:
   deploy-staging:
     uses: ./.github/workflows/reusable-deploy.yml
     with:
-      env: "staging"
+      mode: "staging"
+      # Deployment variables
       project_id: "shopcat-stg-55606"
       project_number: "575553836979"
       service_name: "shopcat-vendorpanel-staging"
       region: "europe-west1"
       registry_path: "europe-west1-docker.pkg.dev"
       image_name: "shopcat-stg-55606/shopcat/shopcat-vendorpanel"
-      adyen_env: "TEST"
-      tangram_merchant_role_id: "role_glukknwgdksyicql"
-      vendorpanel_base_url: "https://shopcat-staging-575553836979.europe-west1.run.app"
-      adyen_merchant_account: CAT-Shop
-      adyen_client_key: "test_FBPEAGR25VAWPAWISXHE2RWVKESJNDIY"
+      # Vite environment variables
+      vite_medusa_base: "/"
+      vite_medusa_storefront_url: "http://localhost:3000"
+      vite_medusa_backend_url: "http://localhost:9000"
+      vite_talk_js_app_id: ""
+      vite_disable_sellers_registration: false

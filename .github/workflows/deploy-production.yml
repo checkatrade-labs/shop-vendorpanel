@@ -9,15 +9,17 @@ jobs:
   deploy-production:
     uses: ./.github/workflows/reusable-deploy.yml
     with:
-      env: "production"
+      mode: "production"
+      # Deployment variables
       project_id: "shopcat-prod-92744"
       project_number: "208915687327"
       service_name: "shopcat-vendorpanel-prod"
       region: "europe-west1"
       registry_path: "europe-west1-docker.pkg.dev"
       image_name: "shopcat-prod-92744/shopcat/shopcat-vendorpanel"
-      adyen_env: "LIVE"
-      tangram_merchant_role_id: "role_glukknwgdksyicql"
-      vendorpanel_base_url: "https://shop.checkatrade.com"
-      adyen_merchant_account: CAT-Shop
-      adyen_client_key: "live_OMPSIM6WWZCZHPY4ZQ2K7BJIUUGPZIC4"
+      # Vite environment variables
+      vite_medusa_base: "/"
+      vite_medusa_storefront_url: "http://localhost:3000"
+      vite_medusa_backend_url: "http://localhost:9000"
+      vite_talk_js_app_id: ""
+      vite_disable_sellers_registration: false

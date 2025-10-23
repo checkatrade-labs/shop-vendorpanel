@@ -17,8 +17,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Accept MODE as build argument
+ARG MODE=staging
+ENV MODE=${MODE}
+
 # Build the application for static deployment
-RUN npm run build:preview
+RUN npm run build:preview:${MODE}
 
 # Production image, copy all the files and serve with a simple HTTP server
 FROM node:18-alpine AS runner
