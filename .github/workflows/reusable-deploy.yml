@@ -1,0 +1,113 @@
+name: Reusable Deploy to Cloud Run
+
+on:
+  workflow_call:
+    inputs:
+      project_id:
+        required: true
+        type: string
+        description: "GCP Project ID"
+      project_number:
+        required: true
+        type: string
+        description: "GCP Project Number"
+      service_name:
+        required: true
+        type: string
+        description: "Cloud Run service name"
+      region:
+        required: true
+        type: string
+        description: "GCP region"
+      registry_path:
+        required: true
+        type: string
+        description: "Container registry path"
+      image_name:
+        required: true
+        type: string
+        description: "Docker image name"
+      env:
+        required: true
+        type: string
+        description: "Application Environment"
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/${{ inputs.project_number }}/locations/global/workloadIdentityPools/checkatrade-github-actions/providers/shopcat"
+          service_account: "gha-shopcat@${{ inputs.project_id }}.iam.gserviceaccount.com"
+          create_credentials_file: true
+          export_environment_variables: true
+          token_format: "access_token"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ inputs.project_id }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        run: |
+          # Get short SHA for the image tag
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+
+          # Configure Docker to use gcloud credentials
+          gcloud auth configure-docker ${{ inputs.registry_path }}
+
+          # Build and push the Docker image
+          docker build \
+            --build-arg NEXT_PUBLIC_ENV=${{ inputs.env }} \
+            --build-arg NEXT_PUBLIC_ADYEN_ENVIRONMENT=${{ inputs.adyen_env }} \
+            --build-arg NEXT_PUBLIC_ADYEN_CLIENT_KEY=${{ inputs.adyen_client_key }} \
+            -t ${{ inputs.registry_path }}/${{ inputs.image_name }}:${SHORT_SHA} \
+            -t ${{ inputs.registry_path }}/${{ inputs.image_name }}:latest \
+            .
+          docker push ${{ inputs.registry_path }}/${{ inputs.image_name }}:${SHORT_SHA}
+          docker push ${{ inputs.registry_path }}/${{ inputs.image_name }}:latest
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          # Get short SHA for the image tag
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+
+          # Deploy to Cloud Run with environment variables
+          gcloud run deploy ${{ inputs.service_name }} \
+            --image ${{ inputs.registry_path }}/${{ inputs.image_name }}:${SHORT_SHA} \
+            --region ${{ inputs.region }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars ENV=${{ inputs.env }},ADYEN_ENVIRONMENT=${{ inputs.adyen_env }},ADYEN_MERCHANT_ACCOUNT=${{ inputs.adyen_merchant_account }},TANGRAM_BASE_URL=https://shop-portal.checkatrade.com/api/v1,TANGRAM_MERCHANT_ROLE_ID=${{ inputs.tangram_merchant_role_id }},vendorpanel_BASE_URL=${{ inputs.vendorpanel_base_url }} \
+            --update-secrets BRAZE_API_KEY=BRAZE_API_KEY:latest,BRAZE_REST_ENDPOINT=BRAZE_REST_ENDPOINT:latest,BRAZE_SENDER_EMAIL=BRAZE_SENDER_EMAIL:latest,BRAZE_APP_ID=BRAZE_APP_ID:latest
+
+      - name: Set IAM policy for public access
+        run: |
+          gcloud run services add-iam-policy-binding ${{ inputs.service_name }} \
+            --region=${{ inputs.region }} \
+            --member=allUsers \
+            --role=roles/run.invoker
+
+      - name: Get deployment URL
+        id: deployment-url
+        run: |
+          URL=$(gcloud run services describe ${{ inputs.service_name }} --region ${{ inputs.region }} --format='value(status.url)')
+          echo "Deployed to: ${URL}"
+          echo "url=${URL}" >> $GITHUB_OUTPUT
+
+    outputs:
+      url: ${{ steps.deployment-url.outputs.url }}
