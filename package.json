@@ -6,6 +6,8 @@
     "dev": "vite",
     "build": "tsup && node ./scripts/generate-types.js",
     "build:preview": "vite build",
+    "build:preview:staging": "vite build --mode staging",
+    "build:preview:production": "vite build --mode production",
     "build:admin": "medusa build",
     "preview": "vite preview",
     "test": "vitest --run",

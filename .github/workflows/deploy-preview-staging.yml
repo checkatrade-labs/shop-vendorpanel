@@ -1,13 +1,13 @@
 name: Deploy PR to Staging
 
 env:
-  ENV: staging
-  PROJECT_ID: shopcat-stg-55606
-  PROJECT_NUMBER: 575553836979
-  ADYEN_ENV: TEST
-  TANGRAM_MERCHANT_ROLE_ID: role_glukknwgdksyicql
-  vendorpanel_BASE_URL: https://shopcat-staging-575553836979.europe-west1.run.app
-  ADYEN_MERCHANT_ACCOUNT: CAT-Shop
+  mode: staging
+  project_id: shopcat-stg-55606
+  project_number: 575553836979
+  service_name: shopcat-vendorpanel-pr
+  region: europe-west1
+  registry_path: europe-west1-docker.pkg.dev
+  image_name: shopcat-stg-55606/shopcat/shopcat-vendorpanel
 
 on:
   pull_request:
@@ -31,7 +31,7 @@ jobs:
         id: pr-name
         run: |
           PR_NUMBER=${{ github.event.number }}
-          SERVICE_NAME="shopcat-vendorpanel-pr-${PR_NUMBER}"
+          SERVICE_NAME="${{ env.service_name }}-${PR_NUMBER}"
           echo "service_name=${SERVICE_NAME}" >> $GITHUB_OUTPUT
 
       - name: Setup Node.js
@@ -47,8 +47,8 @@ jobs:
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "projects/${{ env.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/checkatrade-github-actions/providers/shopcat"
-          service_account: "gha-shopcat@${{ env.PROJECT_ID }}.iam.gserviceaccount.com"
+          workload_identity_provider: "projects/${{ env.project_number }}/locations/global/workloadIdentityPools/checkatrade-github-actions/providers/shopcat"
+          service_account: "gha-shopcat@${{ env.project_id }}.iam.gserviceaccount.com"
           create_credentials_file: true
           export_environment_variables: true
           token_format: "access_token"
@@ -56,7 +56,7 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ env.PROJECT_ID }}
+          project_id: ${{ env.project_id }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -68,16 +68,14 @@ jobs:
           PR_NUMBER=${{ github.event.number }}
 
           # Configure Docker to use gcloud credentials
-          gcloud auth configure-docker europe-west1-docker.pkg.dev
+          gcloud auth configure-docker ${{ env.registry_path }}
 
           # Build and push the Docker image
           docker build \
-            --build-arg NEXT_PUBLIC_ENV=${{ env.ENV }} \
-            --build-arg NEXT_PUBLIC_ADYEN_ENVIRONMENT=${{ inputs.adyen_env }} \
-            --build-arg NEXT_PUBLIC_ADYEN_CLIENT_KEY=${{ inputs.adyen_client_key }} \
-            -t europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/shopcat/shopcat-vendorpanel:pr-${PR_NUMBER}-${SHORT_SHA} \
+            --build-arg MODE=${{ env.mode }} \
+            -t ${{ env.registry_path }}/${{ env.image_name }}:pr-${PR_NUMBER}-${SHORT_SHA} \
             .
-          docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/shopcat/shopcat-vendorpanel:pr-${PR_NUMBER}-${SHORT_SHA}
+          docker push ${{ env.registry_path }}/${{ env.image_name }}:pr-${PR_NUMBER}-${SHORT_SHA}
 
       - name: Deploy to Cloud Run
         id: deploy
@@ -88,8 +86,8 @@ jobs:
 
           # Deploy to Cloud Run with environment variables
           gcloud run deploy ${SERVICE_NAME} \
-            --image europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/shopcat/shopcat-vendorpanel:pr-${PR_NUMBER}-${SHORT_SHA} \
-            --region europe-west1 \
+            --image ${{ env.registry_path }}/${{ env.image_name }}:pr-${PR_NUMBER}-${SHORT_SHA} \
+            --region ${{ env.region }} \
             --platform managed \
             --allow-unauthenticated \
             --tag pr-${PR_NUMBER} \
@@ -98,7 +96,7 @@ jobs:
         run: |
           SERVICE_NAME="${{ steps.pr-name.outputs.service_name }}"
           gcloud run services add-iam-policy-binding ${SERVICE_NAME} \
-            --region=europe-west1 \
+            --region=${{ env.region }} \
             --member=allUsers \
             --role=roles/run.invoker
 
@@ -106,7 +104,7 @@ jobs:
         id: deployment-url
         run: |
           SERVICE_NAME="${{ steps.pr-name.outputs.service_name }}"
-          URL=$(gcloud run services describe ${SERVICE_NAME} --region europe-west1 --format='value(status.url)')
+          URL=$(gcloud run services describe ${SERVICE_NAME} --region ${{ env.region }} --format='value(status.url)')
           echo "url=${URL}" >> $GITHUB_OUTPUT
 
       - name: Comment on PR
@@ -138,15 +136,15 @@ jobs:
         id: pr-name
         run: |
           PR_NUMBER=${{ github.event.number }}
-          SERVICE_NAME="shopcat-vendorpanel-pr-${PR_NUMBER}"
+          SERVICE_NAME="${{ env.service_name }}-${PR_NUMBER}"
           echo "service_name=${SERVICE_NAME}" >> $GITHUB_OUTPUT
 
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "projects/${{ env.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/checkatrade-github-actions/providers/shopcat"
-          service_account: "gha-shopcat@${{ env.PROJECT_ID }}.iam.gserviceaccount.com"
+          workload_identity_provider: "projects/${{ env.project_number }}/locations/global/workloadIdentityPools/checkatrade-github-actions/providers/shopcat"
+          service_account: "gha-shopcat@${{ env.project_id }}.iam.gserviceaccount.com"
           create_credentials_file: true
           export_environment_variables: true
           token_format: "access_token"
@@ -154,7 +152,7 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ env.PROJECT_ID }}
+          project_id: ${{ env.project_id }}
 
       - name: Delete preview deployment
         run: |
@@ -164,9 +162,9 @@ jobs:
           echo "PR #${{ github.event.number }} was ${PR_STATE}, cleaning up preview deployment"
 
           # Check if service exists before trying to delete
-          if gcloud run services describe ${SERVICE_NAME} --region europe-west1 >/dev/null 2>&1; then
+          if gcloud run services describe ${SERVICE_NAME} --region ${{ env.region }} >/dev/null 2>&1; then
             echo "Deleting preview service: ${SERVICE_NAME}"
-            gcloud run services delete ${SERVICE_NAME} --region europe-west1 --quiet
+            gcloud run services delete ${SERVICE_NAME} --region ${{ env.region }} --quiet
             echo "Successfully deleted preview service: ${SERVICE_NAME}"
           else
             echo "Preview service ${SERVICE_NAME} not found, skipping deletion"
@@ -177,7 +175,7 @@ jobs:
           PR_NUMBER=${{ github.event.number }}
 
           # List and delete images with the PR tag
-          IMAGES=$(gcloud artifacts docker images list europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/shopcat/shopcat-vendorpanel --filter="tags:pr-${PR_NUMBER}*" --format="value(IMAGE)" || true)
+          IMAGES=$(gcloud artifacts docker images list ${{ env.registry_path }}/${{ env.image_name }} --filter="tags:pr-${PR_NUMBER}*" --format="value(IMAGE)" || true)
 
           if [ ! -z "$IMAGES" ]; then
             echo "Deleting Docker images for PR ${PR_NUMBER}"
