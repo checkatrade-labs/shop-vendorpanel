@@ -20,16 +20,18 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Production image, copy all the files and serve with nginx
-FROM nginx:alpine AS runner
+# Production image, copy all the files and serve with a simple HTTP server
+FROM node:18-alpine AS runner
 WORKDIR /app
 
+# Install serve globally
+RUN npm install -g serve
+
 # Copy the built application from the builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist ./dist
 
-# Copy nginx configuration if needed (optional)
-# COPY nginx.conf /etc/nginx/nginx.conf
+# Expose the port that Cloud Run will use
+EXPOSE 8080
 
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Use serve to serve the static files on the PORT environment variable
+CMD ["sh", "-c", "serve -s dist -l ${PORT:-8080}"]
