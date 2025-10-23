@@ -3,10 +3,10 @@ name: Reusable Deploy to Cloud Run
 on:
   workflow_call:
     inputs:
-      env:
+      mode:
         required: true
         type: string
-        description: "Application Environment"
+        description: "Vite build mode (staging, production)"
       project_id:
         required: true
         type: string
@@ -31,31 +31,6 @@ on:
         required: true
         type: string
         description: "Docker image name"
-      mode:
-        required: true
-        type: string
-        description: "Build mode (staging or production)"
-      vite_medusa_base:
-        required: true
-        type: string
-        description: "Vite MEDUSA base"
-      vite_medusa_storefront_url:
-        required: true
-        type: string
-        description: "Vite MEDUSA storefront URL"
-      vite_medusa_backend_url:
-        required: true
-        type: string
-        description: "Vite MEDUSA backend URL"
-      vite_talk_js_app_id:
-        required: true
-        type: string
-        description: "Vite Talk JS app ID"
-      vite_disable_sellers_registration:
-        required: true
-        type: string
-        description: "Vite disable sellers registration"
-
 jobs:
   deploy:
     runs-on: ubuntu-latest

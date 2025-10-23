@@ -9,6 +9,7 @@ jobs:
   deploy-production:
     uses: ./.github/workflows/reusable-deploy.yml
     with:
+      # Vite env
       mode: "production"
       # Deployment variables
       project_id: "shopcat-prod-92744"
@@ -17,9 +18,3 @@ jobs:
       region: "europe-west1"
       registry_path: "europe-west1-docker.pkg.dev"
       image_name: "shopcat-prod-92744/shopcat/shopcat-vendorpanel"
-      # Vite environment variables
-      vite_medusa_base: "/"
-      vite_medusa_storefront_url: "http://localhost:3000"
-      vite_medusa_backend_url: "http://localhost:9000"
-      vite_talk_js_app_id: ""
-      vite_disable_sellers_registration: false
