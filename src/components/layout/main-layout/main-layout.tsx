@@ -221,6 +221,11 @@ const useExtensionRoutes = (): Omit<INavItem, "pathname">[] => {
       label: "Stripe Connect",
       to: "/stripe-connect",
     },
+    {
+      icon: <StripeIcon />,
+      label: "Adyen Connect",
+      to: "/adyen-connect",
+    },
   ]
 }
 
