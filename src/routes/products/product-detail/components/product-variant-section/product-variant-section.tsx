@@ -251,8 +251,16 @@ const useColumns = (product: HttpTypes.AdminProduct) => {
         variant?.inventory_items?.[0]?.inventory_item_id!
       )
 
-      const quantity = location_levels?.[0]?.available_quantity || 0
-      const locationCount = location_levels?.[0]?.stock_locations?.length || 0
+      const quantity =
+        location_levels?.reduce(
+          (acc, curr) => acc + curr.available_quantity,
+          0
+        ) || 0
+      const locationCount =
+        location_levels?.reduce(
+          (acc, curr) => acc + curr.stock_locations?.length,
+          0
+        ) || 0
 
       const text = hasInventoryKit
         ? t("products.variant.tableItemAvailable", {
