@@ -1,9 +1,10 @@
 import { ExclamationCircle } from "@medusajs/icons"
 import { Button, Heading, Text } from "@medusajs/ui"
-import { useCreateStripeAccount } from "../../../hooks/api"
+import { useCreateAdyenAccount } from "../../../hooks/api"
+import { PaymentProvider } from "../../../types/providers"
 
 export const NotConnected = () => {
-  const { mutateAsync, isPending } = useCreateStripeAccount()
+  const { mutateAsync, isPending } = useCreateAdyenAccount()
 
   return (
     <div className="flex items-center justify-center text-center my-32 flex-col">
@@ -12,22 +13,23 @@ export const NotConnected = () => {
         Not connected
       </Heading>
       <Text className="text-ui-fg-subtle" size="small">
-        No stripe connection
+        No Adyen connection
       </Text>
       <Button
         isLoading={isPending}
         className="mt-4"
         onClick={() =>
           mutateAsync({
+            payment_provider_id: PaymentProvider.ADYEN_CONNECT,
             context: {
-              country: "US",
-              // external_account: {
-              //   object: 'bank_account',
-              //   country: 'US',
-              //   currency: 'usd',
-              //   account_number: '000123456789',
-              //   routing_number: '110000000',
-              // },
+              legal_name: "Luka LTD Vendor",
+              industry_code: "442B",
+              phone_number: "+44 330 175 5667",
+              country: "GB",
+              city: "Liverpool",
+              postal_code: "L36 6AN",
+              street: "Unit 1 Superstop Building, Wilson Road",
+              street2: "",
             },
           })
         }

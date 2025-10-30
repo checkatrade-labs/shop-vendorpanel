@@ -1,19 +1,22 @@
 import { Container, Heading, Text } from "@medusajs/ui"
 import { NotConnected } from "./components/not-connected"
-import { useStripeAccount } from "../../hooks/api"
+import { useAdyenAccount } from "../../hooks/api"
 import { Status } from "./components/status"
 import { Connected } from "./components/connected"
+import { PaymentProvider } from "../../types/providers"
 
 const getStatus = (payout_account: any) => {
-  if (!payout_account) return "not connected"
-
-  if (!payout_account?.onboarding) return "pending"
-
-  return "connected"
+  return payout_account?.status ?? "not connected"
 }
 
 export const AdyenConnect = () => {
-  const { payout_account } = useStripeAccount()
+  const response = useAdyenAccount();
+
+
+  const adyen = response.payout_accounts?.find((account: any) => account.payment_provider_id === PaymentProvider.ADYEN_CONNECT);
+
+  console.log("response", JSON.stringify(adyen, null, 2))
+
 
   return (
     <Container className="divide-y p-0">
@@ -25,14 +28,14 @@ export const AdyenConnect = () => {
           </Text>
         </div>
         <div>
-          <Status status={getStatus(payout_account)} />
+          <Status status={getStatus(adyen)} />
         </div>
       </div>
       <div className="px-6 py-4">
-        {!payout_account ? (
+        {!adyen ? (
           <NotConnected />
         ) : (
-          <Connected status={getStatus(payout_account)} />
+          <Connected status={getStatus(adyen)} />
         )}
       </div>
     </Container>

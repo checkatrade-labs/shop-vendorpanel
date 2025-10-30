@@ -1,6 +1,7 @@
 import { ExclamationCircle } from "@medusajs/icons"
 import { Button, Heading, Text } from "@medusajs/ui"
 import { useCreateStripeAccount } from "../../../hooks/api"
+import { PaymentProvider } from "../../../types/providers"
 
 export const NotConnected = () => {
   const { mutateAsync, isPending } = useCreateStripeAccount()
@@ -19,8 +20,9 @@ export const NotConnected = () => {
         className="mt-4"
         onClick={() =>
           mutateAsync({
+            payment_provider_id: PaymentProvider.STRIPE_CONNECT,
             context: {
-              country: "US",
+              country: "GB",
               // external_account: {
               //   object: 'bank_account',
               //   country: 'US',

@@ -1,21 +1,27 @@
 import { ExclamationCircle } from "@medusajs/icons"
 import { Button, Heading, Text } from "@medusajs/ui"
-import { useCreateStripeOnboarding } from "../../../hooks/api"
+import { useCreateAdyenOnboarding } from "../../../hooks/api"
 import { Link } from "react-router-dom"
+import { PaymentProvider } from "../../../types/providers"
 
 export const Connected = ({
   status,
 }: {
   status: "connected" | "pending" | "not connected"
 }) => {
-  const { mutateAsync, isPending } = useCreateStripeOnboarding()
+  const { mutateAsync, isPending } = useCreateAdyenOnboarding()
 
   const hostname = window.location.href
 
   const handleOnboarding = async () => {
     try {
       const { payout_account } = await mutateAsync({
+        payment_provider_id: PaymentProvider.ADYEN_CONNECT,
         context: {
+          legal_name: "Medusa Test Company",
+          industry_code: "442B",
+          phone_number: "+447911123456",
+          country: "GB",
           refresh_url: hostname,
           return_url: hostname,
         },
