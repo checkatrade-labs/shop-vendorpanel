@@ -1,10 +1,11 @@
-import { ExclamationCircle, CogSixTooth,  } from "@medusajs/icons"
+import { ExclamationCircle, CogSixTooth, } from "@medusajs/icons"
 import { Button, Heading, Text } from "@medusajs/ui"
 import { useCreateAdyenAccount } from "../../../hooks/api"
 import { PaymentProvider } from "../../../types/providers"
 
-export const NotConnected = () => {
+export const NotConnected = ({ isLoading }: { isLoading: boolean }) => {
   const { mutateAsync, isPending } = useCreateAdyenAccount()
+
 
   return (
     <div className="flex items-center justify-center text-center my-32 flex-col">
@@ -18,6 +19,7 @@ export const NotConnected = () => {
       <Button
         isLoading={isPending}
         className="mt-4"
+        disabled={isLoading}
         onClick={() =>
           mutateAsync({
             payment_provider_id: PaymentProvider.ADYEN_CONNECT,

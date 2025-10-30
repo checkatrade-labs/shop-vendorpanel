@@ -4,7 +4,6 @@ import { useAdyenAccount } from "../../hooks/api"
 import { Status } from "./components/status"
 import { Connected } from "./components/connected"
 import { PaymentProvider } from "../../types/providers"
-import { GeneralSectionSkeleton } from "../../components/common/skeleton"
 
 const getStatus = (payout_account: any) => {
 
@@ -23,12 +22,6 @@ export const AdyenConnect = () => {
 
   const adyen = response.payout_accounts?.find((account: any) => account.payment_provider_id === PaymentProvider.ADYEN_CONNECT);
 
-  if (response.isLoading) {
-    return (
-      <GeneralSectionSkeleton rowCount={8} />
-    )
-  }
-
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
@@ -44,7 +37,7 @@ export const AdyenConnect = () => {
       </div>
       <div className="px-6 py-4">
         {!adyen ? (
-          <NotConnected />
+          <NotConnected isLoading={response.isLoading} />
         ) : (
           <Connected status={getStatus(adyen)} adyenAccount={adyen} />
         )}
