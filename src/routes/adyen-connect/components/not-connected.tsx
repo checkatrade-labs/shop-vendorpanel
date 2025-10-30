@@ -1,4 +1,4 @@
-import { ExclamationCircle } from "@medusajs/icons"
+import { ExclamationCircle, CogSixTooth,  } from "@medusajs/icons"
 import { Button, Heading, Text } from "@medusajs/ui"
 import { useCreateAdyenAccount } from "../../../hooks/api"
 import { PaymentProvider } from "../../../types/providers"
@@ -13,7 +13,7 @@ export const NotConnected = () => {
         Not connected
       </Heading>
       <Text className="text-ui-fg-subtle" size="small">
-        No Adyen connection
+        Please connect your Adyen account to receive payouts
       </Text>
       <Button
         isLoading={isPending}
@@ -34,7 +34,7 @@ export const NotConnected = () => {
           })
         }
       >
-        Connect Adyen
+        <CogSixTooth /> Connect Adyen
       </Button>
     </div>
   )

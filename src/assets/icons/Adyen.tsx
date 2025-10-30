@@ -1,4 +1,4 @@
-export const AdyenIcon = () => {
+export const AdyenIcon = ({ className }: { className?: string }) => {
   return (
     <svg
       width="16"
@@ -6,6 +6,7 @@ export const AdyenIcon = () => {
       viewBox="0 0 16 16"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      className={className}
     >
       <rect width="16" height="16" rx="2" fill="url(#pattern0_8182_812)" />
       <defs>

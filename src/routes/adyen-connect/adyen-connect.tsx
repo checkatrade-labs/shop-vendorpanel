@@ -6,17 +6,21 @@ import { Connected } from "./components/connected"
 import { PaymentProvider } from "../../types/providers"
 
 const getStatus = (payout_account: any) => {
-  return payout_account?.status ?? "not connected"
+
+  switch (payout_account?.status) {
+    case "pending":
+      return "pending"
+    case "active":
+      return "connected"
+    default:
+      return "not connected"
+  }
 }
 
 export const AdyenConnect = () => {
   const response = useAdyenAccount();
 
-
   const adyen = response.payout_accounts?.find((account: any) => account.payment_provider_id === PaymentProvider.ADYEN_CONNECT);
-
-  console.log("response", JSON.stringify(adyen, null, 2))
-
 
   return (
     <Container className="divide-y p-0">
@@ -35,7 +39,7 @@ export const AdyenConnect = () => {
         {!adyen ? (
           <NotConnected />
         ) : (
-          <Connected status={getStatus(adyen)} />
+          <Connected status={getStatus(adyen)} adyenAccount={adyen} />
         )}
       </div>
     </Container>
