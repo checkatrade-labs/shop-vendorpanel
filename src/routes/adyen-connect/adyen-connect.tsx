@@ -25,7 +25,7 @@ export const AdyenConnect = () => {
 
   if (response.isLoading) {
     return (
-      <GeneralSectionSkeleton rowCount={10} />
+      <GeneralSectionSkeleton rowCount={8} />
     )
   }
 
