@@ -29,6 +29,20 @@ const AdyenConnectSchema = z.object({
 
 type AdyenConnectSchemaType = z.infer<typeof AdyenConnectSchema>
 
+// Normalize country codes to ISO 2 format
+const normalizeCountryCode = (code: string | undefined): string => {
+  if (!code) return ""
+  
+  const normalized = code.toLowerCase()
+  
+  // Handle common country code variations
+  const countryCodeMap: Record<string, string> = {
+    uk: "gb", // United Kingdom
+  }
+  
+  return countryCodeMap[normalized] || normalized
+}
+
 export const NotConnected = ({ isLoading }: { isLoading: boolean }) => {
   const { mutateAsync, isPending } = useCreateAdyenAccount()
   const { seller, isPending: sellerPending } = useMe()
@@ -60,7 +74,7 @@ export const NotConnected = ({ isLoading }: { isLoading: boolean }) => {
         legal_name: seller.name || "",
         industry_code: "",
         phone_number: seller.phone || "",
-        country: seller.country_code?.toLowerCase() || "",
+        country: normalizeCountryCode(seller.country_code),
         city: seller.city || "",
         postal_code: seller.postal_code || "",
         street: seller.address_line || "",
