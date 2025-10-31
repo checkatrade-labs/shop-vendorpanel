@@ -14,6 +14,7 @@ import {
   industryCodesApprovalRequired,
 } from "../../../lib/data/industry-codes"
 import { PaymentProvider } from "../../../types/providers"
+import { AdyenIcon } from "../../../assets/icons/Adyen.tsx"
 
 const AdyenConnectSchema = z.object({
   legal_name: z.string().min(1, { message: "Legal name is required" }),
@@ -94,11 +95,11 @@ export const NotConnected = ({ isLoading }: { isLoading: boolean }) => {
 
   return (
     <div className="flex items-center justify-center my-8 flex-col">
-      <Heading level="h2" className="mt-4">
-        Not connected
+      <Heading level="h2" className="mt-4 flex items-center gap-x-2">
+        <AdyenIcon className="w-4 h-4" /> Adyen Connect
       </Heading>
       <Text className="text-ui-fg-subtle" size="small">
-        Please connect your Adyen account to receive payouts
+        Connect your Adyen account to start receiving payouts
       </Text>
 
       <Form {...form}>
