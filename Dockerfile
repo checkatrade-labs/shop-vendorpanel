@@ -17,9 +17,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Rebuild native dependencies for the current platform
-RUN npm rebuild
-
 # Accept MODE as build argument
 ARG MODE=staging
 ENV MODE=${MODE}
