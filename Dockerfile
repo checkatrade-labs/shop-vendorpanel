@@ -1,5 +1,5 @@
 # Use the official Node.js runtime as the base image
-FROM node:18-slim AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -25,7 +25,7 @@ ENV MODE=${MODE}
 RUN npm run build:preview:${MODE}
 
 # Production image, copy all the files and serve with a simple HTTP server
-FROM node:18-slim AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install serve globally
