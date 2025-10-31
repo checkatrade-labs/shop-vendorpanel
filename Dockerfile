@@ -1,5 +1,5 @@
 # Use the official Node.js runtime as the base image
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -17,6 +17,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Rebuild native dependencies for the current platform
+RUN npm rebuild
+
 # Accept MODE as build argument
 ARG MODE=staging
 ENV MODE=${MODE}
@@ -25,7 +28,7 @@ ENV MODE=${MODE}
 RUN npm run build:preview:${MODE}
 
 # Production image, copy all the files and serve with a simple HTTP server
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install serve globally

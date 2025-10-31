@@ -2,6 +2,7 @@ import { ExclamationCircle } from "@medusajs/icons"
 import { Button, Heading, Text } from "@medusajs/ui"
 import { useCreateStripeOnboarding } from "../../../hooks/api"
 import { Link } from "react-router-dom"
+import { PaymentProvider } from "../../../types/providers"
 
 export const Connected = ({
   status,
@@ -15,6 +16,7 @@ export const Connected = ({
   const handleOnboarding = async () => {
     try {
       const { payout_account } = await mutateAsync({
+        payment_provider_id: PaymentProvider.STRIPE_CONNECT,
         context: {
           refresh_url: hostname,
           return_url: hostname,

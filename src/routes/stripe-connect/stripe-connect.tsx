@@ -3,6 +3,7 @@ import { NotConnected } from "./components/not-connected"
 import { useStripeAccount } from "../../hooks/api"
 import { Status } from "./components/status"
 import { Connected } from "./components/connected"
+import { PaymentProvider } from "../../types/providers"
 
 const getStatus = (payout_account: any) => {
   if (!payout_account) return "not connected"
@@ -13,7 +14,11 @@ const getStatus = (payout_account: any) => {
 }
 
 export const StripeConnect = () => {
-  const { payout_account } = useStripeAccount()
+  const response = useStripeAccount()
+
+  const stripe = response.payout_accounts?.find((account: any) => account.payment_provider_id === PaymentProvider.STRIPE_CONNECT);
+
+  console.log("stripe", stripe)
 
   return (
     <Container className="divide-y p-0">
@@ -25,14 +30,14 @@ export const StripeConnect = () => {
           </Text>
         </div>
         <div>
-          <Status status={getStatus(payout_account)} />
+          <Status status={getStatus(stripe)} />
         </div>
       </div>
       <div className="px-6 py-4">
-        {!payout_account ? (
+        {!stripe ? (
           <NotConnected />
         ) : (
-          <Connected status={getStatus(payout_account)} />
+          <Connected status={getStatus(stripe)} />
         )}
       </div>
     </Container>
