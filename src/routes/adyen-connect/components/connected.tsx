@@ -23,6 +23,8 @@ export const Connected = ({ status, adyenAccount }: ConnectedProps) => {
   const verificationErrors: VerificationError[] | undefined =
     adyenAccount?.data?.problems?.[0]?.verificationErrors
 
+    console.log(status)
+
   if (status === "connected") {
     const organization = adyenAccount?.data?.organization
     const transferInstruments = adyenAccount?.data?.transferInstruments
@@ -155,7 +157,7 @@ export const Connected = ({ status, adyenAccount }: ConnectedProps) => {
 
   // For pending status, show the verification component
   if (status === "pending") {
-    return <PendingVerification verificationErrors={verificationErrors} />
+    return <PendingVerification status={status} verificationErrors={verificationErrors} />
   }
 
   // Fallback for other statuses
