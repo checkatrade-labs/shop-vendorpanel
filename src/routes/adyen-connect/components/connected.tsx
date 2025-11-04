@@ -19,22 +19,21 @@ interface ConnectedProps {
 }
 
 export const Connected = ({ status, adyenAccount }: ConnectedProps) => {
-  // Extract verification errors from the account data
-  const verificationErrors: VerificationError[] | undefined =
-    adyenAccount?.data?.problems?.[0]?.verificationErrors
+  const legalEntity = adyenAccount.data.legal_entity;
+  const verificationErrors: VerificationError[] | undefined = legalEntity?.problems?.[0]?.verificationErrors
 
     console.log(status)
 
   if (status === "connected") {
-    const organization = adyenAccount?.data?.organization
-    const transferInstruments = adyenAccount?.data?.transferInstruments
-    const entityAssociations = adyenAccount?.data?.entityAssociations || []
+    const organization = legalEntity?.organization
+    const transferInstruments = legalEntity?.transferInstruments
+    const entityAssociations = legalEntity?.entityAssociations || []
     const bankAccount = transferInstruments?.[0]?.accountIdentifier
     const phoneNumber = organization?.phone?.number
     const registrationNumber = organization?.registrationNumber
     
     // Get active capabilities
-    const capabilities = adyenAccount?.data?.capabilities || {}
+    const capabilities = legalEntity?.capabilities || {}
     const activeCapabilities = Object.entries(capabilities)
       .filter(([_, capability]: [string, any]) => 
         capability.allowed && capability.verificationStatus === "valid"
