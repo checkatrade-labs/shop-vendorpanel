@@ -34,6 +34,14 @@ export const RouteMap: RouteObject[] = [
             lazy: () => import("../../routes/stripe-connect"),
           },
           {
+            path: "adyen-connect",
+            handle: {
+              breadcrumb: () => "Adyen Connects",
+            },
+            errorElement: <ErrorBoundary />,
+            lazy: () => import("../../routes/adyen-connect"),
+          },
+          {
             path: "dashboard",
             errorElement: <ErrorBoundary />,
             lazy: () => import("../../routes/dashboard"),

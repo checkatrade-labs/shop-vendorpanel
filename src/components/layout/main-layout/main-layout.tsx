@@ -30,6 +30,7 @@ import { UserMenu } from "../user-menu"
 import { StripeIcon } from "../../../assets/icons/Stripe"
 import { ImageAvatar } from "../../common/image-avatar"
 import { useUnreads } from "@talkjs/react"
+import { AdyenIcon } from "../../../assets/icons/Adyen"
 
 export const MainLayout = () => {
   return (
@@ -220,6 +221,11 @@ const useExtensionRoutes = (): Omit<INavItem, "pathname">[] => {
       icon: <StripeIcon />,
       label: "Stripe Connect",
       to: "/stripe-connect",
+    },
+    {
+      icon: <AdyenIcon />,
+      label: "Adyen Connect",
+      to: "/adyen-connect",
     },
   ]
 }
