@@ -551,10 +551,13 @@ export const useImportProducts = (
 }
 
 export const useConfirmImportProducts = (
-  options?: UseMutationOptions<{}, FetchError, string>
+  options?: UseMutationOptions<any, FetchError, string>
 ) => {
   return useMutation({
-    mutationFn: (payload) => sdk.admin.product.confirmImport(payload),
+    mutationFn: (transactionId) =>
+      fetchQuery(`/vendor/products/import/${transactionId}/confirm`, {
+        method: "POST",
+      }),
     onSuccess: (data, variables, context) => {
       options?.onSuccess?.(data, variables, context)
     },
