@@ -22,6 +22,11 @@ export default defineConfig(({ mode }) => {
   const MEDUSA_PROJECT = env.VITE_MEDUSA_PROJECT || null
   const sources = MEDUSA_PROJECT ? [MEDUSA_PROJECT] : []
 
+  // In development, use relative URLs so the proxy can handle requests
+  // In production, use the full backend URL
+  const isDev = mode === "development"
+  const BACKEND_URL_FOR_CLIENT = isDev ? "" : BACKEND_URL
+
   return {
     plugins: [
       inspect(),
@@ -32,7 +37,7 @@ export default defineConfig(({ mode }) => {
     ],
     define: {
       __BASE__: JSON.stringify(BASE),
-      __BACKEND_URL__: JSON.stringify(BACKEND_URL),
+      __BACKEND_URL__: JSON.stringify(BACKEND_URL_FOR_CLIENT),
       __STOREFRONT_URL__: JSON.stringify(STOREFRONT_URL),
       __PUBLISHABLE_API_KEY__: JSON.stringify(PUBLISHABLE_API_KEY),
       __TALK_JS_APP_ID__: JSON.stringify(TALK_JS_APP_ID),
@@ -42,6 +47,33 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       open: true,
+      proxy: {
+        "/auth": {
+          target: BACKEND_URL,
+          changeOrigin: true,
+          secure: false,
+        },
+        "/vendor": {
+          target: BACKEND_URL,
+          changeOrigin: true,
+          secure: false,
+        },
+        "/seller": {
+          target: BACKEND_URL,
+          changeOrigin: true,
+          secure: false,
+        },
+        "/admin": {
+          target: BACKEND_URL,
+          changeOrigin: true,
+          secure: false,
+        },
+        "/store": {
+          target: BACKEND_URL,
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     },
     optimizeDeps: {
       entries: [],
