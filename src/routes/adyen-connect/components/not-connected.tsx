@@ -13,13 +13,18 @@ import {
   industryCodesNoApprovalRequired,
   industryCodesApprovalRequired,
 } from "../../../lib/data/industry-codes"
+import { phoneCodes, getPhoneCodeByIso2 } from "../../../lib/data/phone-codes"
 import { PaymentProvider } from "../../../types/providers"
 import { AdyenIcon } from "../../../assets/icons/Adyen.tsx"
 
 const AdyenConnectSchema = z.object({
   legal_name: z.string().min(1, { message: "Legal name is required" }),
   industry_code: z.string().min(1, { message: "Industry code is required" }),
-  phone_number: z.string().min(1, { message: "Phone number is required" }),
+  phone_code: z.string().min(1, { message: "Phone code is required" }),
+  phone_number: z
+    .string()
+    .min(1, { message: "Phone number is required" })
+    .regex(/^\d+$/, { message: "Phone number must contain only digits" }),
   country: z.string().min(1, { message: "Country is required" }),
   city: z.string().min(1, { message: "City is required" }),
   postal_code: z.string().min(1, { message: "Postal code is required" }),
@@ -32,14 +37,14 @@ type AdyenConnectSchemaType = z.infer<typeof AdyenConnectSchema>
 // Normalize country codes to ISO 2 format
 const normalizeCountryCode = (code: string | undefined): string => {
   if (!code) return ""
-  
+
   const normalized = code.toLowerCase()
-  
+
   // Handle common country code variations
   const countryCodeMap: Record<string, string> = {
     uk: "gb", // United Kingdom
   }
-  
+
   return countryCodeMap[normalized] || normalized
 }
 
@@ -53,11 +58,26 @@ export const NotConnected = ({ isLoading }: { isLoading: boolean }) => {
     ...industryCodesApprovalRequired,
   ]
 
+  // Create unique phone codes list (deduplicate by code, prioritizing main countries)
+  const priorityCountries = ['us', 'gb', 'ca', 'au', 'de', 'fr', 'it', 'es'] // Main countries for shared codes
+  const uniquePhoneCodes = phoneCodes.reduce((acc, phoneCode) => {
+    const existing = acc.find(pc => pc.code === phoneCode.code)
+    if (!existing) {
+      acc.push(phoneCode)
+    } else if (priorityCountries.includes(phoneCode.iso_2) && !priorityCountries.includes(existing.iso_2)) {
+      // Replace with priority country
+      const index = acc.indexOf(existing)
+      acc[index] = phoneCode
+    }
+    return acc
+  }, [] as typeof phoneCodes)
+
   const form = useForm<AdyenConnectSchemaType>({
     resolver: zodResolver(AdyenConnectSchema),
     defaultValues: {
       legal_name: "",
       industry_code: "",
+      phone_code: "+44",
       phone_number: "",
       country: "",
       city: "",
@@ -69,34 +89,60 @@ export const NotConnected = ({ isLoading }: { isLoading: boolean }) => {
 
   // Pre-fill form with seller data
   useEffect(() => {
-    if (seller) {
-      form.reset({
-        legal_name: seller.name || "",
-        industry_code: "",
-        phone_number: seller.phone || "",
-        country: normalizeCountryCode(seller.country_code),
-        city: seller.city || "",
-        postal_code: seller.postal_code || "",
-        street: seller.address_line || "",
-        street2: "",
-      })
+    if (sellerPending || !seller) return
+    
+    // Extract phone code from seller's phone or use country-based default
+    let phoneCode = "+44"
+    let phoneNumber = seller.phone || ""
+
+    // If phone has a code, extract it
+    if (phoneNumber.startsWith("+")) {
+      // Try to match known phone codes
+      const matchedCode = phoneCodes.find(pc => phoneNumber.startsWith(pc.code))
+      if (matchedCode) {
+        phoneCode = matchedCode.code
+        phoneNumber = phoneNumber.substring(matchedCode.code.length).trim()
+      }
+    } else if (seller.country_code) {
+      // Use country code to determine phone code
+      phoneCode = getPhoneCodeByIso2(seller.country_code)
     }
+
+    // Strip any non-digit characters from phone number
+    phoneNumber = phoneNumber.replace(/\D/g, "")
+
+    form.reset({
+      legal_name: seller.name || "",
+      industry_code: "",
+      phone_code: phoneCode,
+      phone_number: phoneNumber,
+      country: normalizeCountryCode(seller.country_code),
+      city: seller.city || "",
+      postal_code: seller.postal_code || "",
+      street: seller.address_line || "",
+      street2: "",
+    })
   }, [seller, form])
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync({
+    // Combine phone code and phone number
+    const fullPhoneNumber = `${data.phone_code}${data.phone_number}`
+
+    const requestData = {
       payment_provider_id: PaymentProvider.ADYEN_CONNECT,
       context: {
         legal_name: data.legal_name,
         industry_code: data.industry_code,
-        phone_number: data.phone_number,
+        phone_number: fullPhoneNumber,
         country: data.country.toUpperCase(),
         city: data.city,
         postal_code: data.postal_code,
         street: data.street,
         street2: data.street2 || "",
       },
-    })
+    }
+
+    await mutateAsync(requestData)
   })
 
   if (sellerPending) {
@@ -121,17 +167,51 @@ export const NotConnected = ({ isLoading }: { isLoading: boolean }) => {
           onSubmit={handleSubmit}
           className="w-full max-w-2xl mt-8 flex flex-col gap-y-4"
         >
-          {/* Legal Name and Phone Number on the same line */}
+          {/* Legal Name */}
+          <Form.Field
+            control={form.control}
+            name="legal_name"
+            render={({ field }) => {
+              return (
+                <Form.Item>
+                  <Form.Label>Legal Name</Form.Label>
+                  <Form.Control>
+                    <Input {...field} placeholder="Enter legal business name" />
+                  </Form.Control>
+                  <Form.ErrorMessage />
+                </Form.Item>
+              )
+            }}
+          />
+
+          {/* Phone Code and Phone Number on the same line */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Form.Field
               control={form.control}
-              name="legal_name"
+              name="phone_code"
               render={({ field }) => {
                 return (
                   <Form.Item>
-                    <Form.Label>Legal Name</Form.Label>
+                    <Form.Label>Phone Code</Form.Label>
                     <Form.Control>
-                      <Input {...field} placeholder="Enter legal business name" />
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <Select.Trigger>
+                          <Select.Value placeholder="Select code" />
+                        </Select.Trigger>
+                        <Select.Content>
+                          {uniquePhoneCodes.map((phoneCode) => (
+                            <Select.Item
+                              key={phoneCode.code}
+                              value={phoneCode.code}
+                            >
+                              {phoneCode.display}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select>
                     </Form.Control>
                     <Form.ErrorMessage />
                   </Form.Item>
@@ -146,7 +226,7 @@ export const NotConnected = ({ isLoading }: { isLoading: boolean }) => {
                   <Form.Item>
                     <Form.Label>Phone Number</Form.Label>
                     <Form.Control>
-                      <Input {...field} placeholder="+44 330 175 5667" />
+                      <Input {...field} placeholder="7700900123" />
                     </Form.Control>
                     <Form.ErrorMessage />
                   </Form.Item>
