@@ -217,11 +217,11 @@ const useCoreRoutes = (): Omit<INavItem, "pathname">[] => {
 
 const useExtensionRoutes = (): Omit<INavItem, "pathname">[] => {
   return [
-    {
-      icon: <StripeIcon />,
-      label: "Stripe Connect",
-      to: "/stripe-connect",
-    },
+    // {
+    //   icon: <StripeIcon />,
+    //   label: "Stripe Connect",
+    //   to: "/stripe-connect",
+    // },
     {
       icon: <AdyenIcon />,
       label: "Adyen Connect",
