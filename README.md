@@ -53,7 +53,7 @@ Mercur is a platform to start, customize, manage, and scale your marketplace for
 Clone the repository
 
 ```js
-git clone https://github.com/mercurjs/vendor-panel.git
+git clone https://github.com/checkatrade-labs/shop-vendorpanel
 ```
 
 &nbsp;
